@@ -1,0 +1,879 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AFLOR · CRM de Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  /* ── paleta OBRAS (exata) ── */
+  --navy:    #000000;
+  --navy2:   #001000;
+  --navy3:   #2b2c32;
+  --green:   #c2410c;
+  --green2:  #c24100;
+  --gdim:    #dcfce7;
+  --gtext:   #15803d;
+
+  --orange:  #f97316;
+  --odim:    #fff7ed;
+  --otext:   #c2410c;
+
+  --red:     #ef4444;
+  --rdim:    #fef2f2;
+  --rtext:   #b91c1c;
+
+  --yellow:  #eab308;
+  --ydim:    #fefce8;
+  --ytext:   #92400e;
+
+  --blue:    #3b82f6;
+  --bdim:    #eff6ff;
+  --btext:   #1d4ed8;
+
+  --bg:      #f1f5f9;
+  --white:   #ffffff;
+  --border:  #e2e8f0;
+  --border2: #cbd5e1;
+
+  --t1: #0f172a;
+  --t2: #475569;
+  --t3: #94a3b8;
+  --t4: #cbd5e1;
+
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+  --r: 12px;
+  --rs: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;min-height:100vh}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;padding-top:64px}
+
+/* ── LOADING ── */
+#ld{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10000;transition:opacity .4s}
+#ld.gone{opacity:0;pointer-events:none}
+.ldring{width:38px;height:38px;border:3px solid var(--navy3);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#ld-t{color:#64748b;font-size:12px;letter-spacing:.04em}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--navy);
+  padding:0 28px;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+}
+/* ── LOGO AFLOR ── */
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand-text .name{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.brand-text .sub{font-size:10px;color:#64748b;letter-spacing:.04em}
+
+/* nav tabs */
+.top-nav{display:flex;align-items:center;gap:4px}
+.tn{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:8px;
+  font-size:13px;font-weight:500;color:#94a3b8;
+  cursor:pointer;transition:all .15s;text-decoration:none;border:none;background:transparent;
+}
+.tn:hover{background:var(--navy3);color:#fff}
+.tn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(34,197,94,.4)}
+.tn svg{flex-shrink:0}
+
+.top-right{display:flex;align-items:center;gap:10px}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--navy3);border-radius:20px;font-size:11px;color:#94a3b8}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(34,197,94,0)}}
+.top-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748b}
+
+/* ── QUICK ACCESS BAR ── */
+.qbar{position:sticky;top:64px;z-index:199;
+  background:var(--navy2);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:10px 28px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.qbar-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#475569;font-weight:600;margin-right:4px}
+.qa{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:7px;
+  font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .18s;text-decoration:none;border:none;
+}
+.qa-form{background:var(--orange);color:#fff;box-shadow:0 2px 8px rgba(249,115,22,.35)}
+.qa-form:hover{background:#ea6c0a}
+.qa-sheet{background:var(--navy3);border:1px solid rgba(255,255,255,.08);color:#94a3b8}
+.qa-sheet:hover{background:rgba(255,255,255,.08);color:#fff}
+.qa-site{background:var(--navy3);border:1px solid rgba(255,255,255,.08);color:#94a3b8}
+.qa-site:hover{background:rgba(255,255,255,.08);color:#fff}
+.qa-ref{background:var(--navy3);border:1px solid rgba(255,255,255,.08);color:#94a3b8}
+.qa-ref:hover{background:rgba(255,255,255,.08);color:#fff}
+.qa-ref.spin svg{animation:spin .7s linear infinite}
+.ts-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569}
+
+/* ── CONTENT ── */
+.content{padding:20px 28px;max-width:1700px;margin:0 auto}
+
+/* ── KPI ROW ── */
+.krow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kcard{
+  background:var(--white);border-radius:var(--r);
+  padding:18px 20px;box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:box-shadow .2s, transform .15s;
+}
+.kcard:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.k-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.kg .k-accent{background:var(--green)}
+.ko .k-accent{background:var(--orange)}
+.kr .k-accent{background:var(--red)}
+.ky .k-accent{background:var(--yellow)}
+.kb .k-accent{background:var(--blue)}
+.k-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.k-ico{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+.kg .k-ico{background:var(--gdim)}.ko .k-ico{background:var(--odim)}.kr .k-ico{background:var(--rdim)}.ky .k-ico{background:var(--ydim)}.kb .k-ico{background:var(--bdim)}
+.k-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.kg .k-badge{background:var(--gdim);color:var(--gtext)}.ko .k-badge{background:var(--odim);color:var(--otext)}.kr .k-badge{background:var(--rdim);color:var(--rtext)}.ky .k-badge{background:var(--ydim);color:var(--ytext)}.kb .k-badge{background:var(--bdim);color:var(--btext)}
+.k-val{font-size:30px;font-weight:700;line-height:1;margin-bottom:3px;letter-spacing:-.5px;color:var(--t1)}
+.k-lbl{font-size:11px;color:var(--t2)}
+
+/* ── CHARTS GRID ── */
+.cgrid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow)}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.ph-title{font-size:14px;font-weight:600;color:var(--t1)}
+.ph-sub{font-size:11px;color:var(--t3);margin-bottom:14px}
+.cw{position:relative;height:185px}
+
+/* ── FU STRIP ── */
+.fu-row{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.fu-ttl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--otext);white-space:nowrap;display:flex;align-items:center;gap:5px;font-weight:700;flex-shrink:0;background:var(--odim);padding:5px 10px;border-radius:6px}
+.fu-items{display:flex;flex-wrap:wrap;gap:6px}
+.fuchip{display:flex;align-items:center;gap:6px;background:var(--odim);border:1px solid #fed7aa;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;transition:all .15s}
+.fuchip:hover{border-color:var(--orange);background:#fff7ed}
+.fuchip .co{color:var(--t1);font-weight:600}.fuchip .dt{color:var(--t3);font-family:'JetBrains Mono',monospace;font-size:9px}
+.fuchip.ov{background:var(--rdim);border-color:#fca5a5}.fuchip.ov .dt{color:var(--rtext)}
+
+/* ── FILTER BAR ── */
+.fbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.sbox{display:flex;align-items:center;gap:7px;background:var(--white);border:1px solid var(--border2);border-radius:var(--rs);padding:0 12px;flex:1;min-width:190px;max-width:300px;box-shadow:var(--shadow)}
+.sbox input{background:transparent;border:none;color:var(--t1);font-family:'Inter',sans-serif;font-size:12px;padding:8px 0;outline:none;width:100%}
+.sbox input::placeholder{color:var(--t3)}
+.sbox:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.1)}
+select{background:var(--white);border:1px solid var(--border2);border-radius:var(--rs);color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;padding:8px 28px 8px 11px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;box-shadow:var(--shadow);transition:border-color .15s}
+select:focus{border-color:var(--green);outline:none}
+.fcnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);margin-left:auto;background:var(--white);border:1px solid var(--border);border-radius:5px;padding:4px 10px}
+
+/* ── TABLE ── */
+.tpanel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.tpanel-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tpanel-ttl{font-size:14px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:8px}
+.tpanel-ttl span{font-size:10px;color:var(--t3);font-weight:400;font-family:'JetBrains Mono',monospace;background:var(--bg);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
+.tpanel-sub{font-size:11px;color:var(--t3)}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:10px 14px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);font-weight:700;white-space:nowrap;cursor:pointer;user-select:none;background:var(--bg)}
+th:hover{color:var(--t2)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
+tbody tr.is-closed{opacity:.65}
+tbody tr.is-closed:hover{background:#fef2f2}
+tbody tr.is-fechado{background:#f0fdf4}
+tbody tr.is-fechado:hover{background:#dcfce7}
+tbody tr.is-reuniao{background:#eff6ff}
+tbody tr.is-reuniao:hover{background:#dbeafe}
+tbody tr:hover{background:#f8fafc}
+tbody tr:last-child{border-bottom:none}
+td{padding:10px 14px;font-size:12px;vertical-align:middle}
+.te{font-weight:600;max-width:170px;color:var(--t1)}
+.tcn{color:var(--t2);font-size:11px;max-width:130px}
+.tsg{color:var(--t3);font-size:10px;max-width:150px}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:9px;font-weight:700;white-space:nowrap;letter-spacing:.03em}
+.cA{background:var(--rdim);color:var(--rtext);border:1px solid #fca5a5}
+.cM{background:var(--odim);color:var(--otext);border:1px solid #fed7aa}
+.cB{background:var(--bdim);color:var(--btext);border:1px solid #bfdbfe}
+.cS{background:var(--bg);color:var(--t2);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0}
+.cF{background:var(--gdim);color:var(--gtext);border:1px solid #bbf7d0}
+.cW{background:var(--bg);color:var(--t3);border:1px solid var(--border)}
+.cLost{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.cFechado{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-weight:700}
+.cReuniao{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+/* Diagnóstico Enviado chip */
+.cDiag{background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-weight:700}
+.cDiagNo{background:var(--bg);color:var(--t3);border:1px solid var(--border)}
+/* Textarea editável no modal */
+.etarea{background:var(--white);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 11px;font-size:12px;color:var(--t1);font-family:'Inter',sans-serif;width:100%;outline:none;transition:all .15s;resize:vertical;min-height:60px;line-height:1.5}
+.etarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700}
+.pH{color:var(--gtext)}.pM{color:var(--otext)}.pL{color:var(--t3)}
+.fudt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)}
+.fudt.ov{color:var(--rtext);font-weight:600}.fudt.sn{color:var(--otext);font-weight:600}
+
+/* ── MODAL (Apenas para o CRM) ── */
+.msk{display:none;position:fixed;inset:0;background:rgba(15,30,45,.7);z-index:10000;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.msk.open{display:flex}
+.mbox{background:var(--white);border:1px solid var(--border);border-radius:16px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;position:relative;z-index:10001;animation:mIn .2s ease;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+@keyframes mIn{from{opacity:0;transform:translateY(12px) scale(.97)}}
+.mhdr{padding:20px 24px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:10}
+.mclose{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border);color:var(--t3);border-radius:7px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+.mclose:hover{color:var(--t1);border-color:var(--border2);background:var(--border)}
+.m-emp{font-size:19px;font-weight:700;color:var(--t1);letter-spacing:-.3px;margin-bottom:2px}
+.m-sub{color:var(--t3);font-size:11px;margin-bottom:10px}
+.m-chips{display:flex;flex-wrap:wrap;gap:5px}
+.mbody{padding:18px 24px}
+.msec{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.msec::after{content:'';flex:1;height:1px;background:var(--border)}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mfield label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);display:block;margin-bottom:4px;font-weight:600}
+.mfield p{font-size:12px;color:var(--t1)}
+.efield{background:var(--white);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 11px;font-size:12px;color:var(--t1);font-family:'Inter',sans-serif;width:100%;outline:none;transition:all .15s}
+.efield:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.efield.esel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+.edit-note{font-size:10px;color:var(--t3);margin-bottom:12px;display:flex;align-items:center;gap:5px;background:var(--gdim);padding:7px 11px;border-radius:7px;border:1px solid #bbf7d0}
+.edit-note em{color:var(--gtext);font-style:normal;font-weight:600}
+.save-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-top:1px solid var(--border);background:var(--white);position:sticky;bottom:0;gap:10px}
+.btn-save{display:flex;align-items:center;gap:6px;padding:9px 20px;background:var(--green);border:none;color:#fff;border-radius:var(--rs);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;box-shadow:0 2px 8px rgba(34,197,94,.3)}
+.btn-save:hover{background:var(--green2);box-shadow:0 4px 12px rgba(34,197,94,.4)}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.save-status{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.save-status.ok{color:var(--gtext)}.save-status.err{color:var(--rtext)}
+.mlinks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mlink{display:flex;align-items:center;gap:4px;background:var(--white);border:1px solid var(--border2);color:var(--btext);border-radius:6px;padding:5px 11px;font-size:10px;text-decoration:none;transition:all .15s;font-weight:600;box-shadow:var(--shadow)}
+.mlink:hover{border-color:var(--blue);background:var(--bdim)}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--border);padding:12px 28px;font-size:10px;color:var(--t3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;background:var(--white)}
+
+.empt{text-align:center;padding:40px;color:var(--t3)}
+.empt span{font-size:26px;display:block;margin-bottom:6px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+@media(max-width:1200px){.krow{grid-template-columns:repeat(3,1fr);}.cgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.krow{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.content{padding:14px}}
+@media(max-width:580px){.topbar,.qbar{padding:0 14px}}
+</style>
+</head>
+<body>
+
+<div id="ld"><div class="ldring"></div><div id="ld-t">Aguardando…</div></div>
+
+<div class="topbar">
+  <a class="brand" href="#">
+    <!-- logo AFLOR -->
+    <div class="brand-text">
+      <div class="name">Plataforma AFLOR</div>
+      <div class="sub">CRM de Vendas</div>
+    </div>
+  </a>
+      <button class="tn active" id="tab-crm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      🤝 CRM de Vendas
+    </button>
+  <div class="top-right">
+    <div class="top-time" id="topTime">—</div>
+    <div class="live-pill"><span class="live-dot"></span> Ao vivo</div>
+  </div>
+</div>
+
+<div id="module-crm">
+  <div class="qbar">
+    <span class="qbar-lbl">Acesso rápido</span>
+    <a class="qa qa-form" href="https://app.mydatascope.com/public/webforms?share_token=fde3ca708b63e3eac966378542fab03a&task_form_id=674690" target="_blank">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      📝 Formulário de Cadastro ↗
+    </a>
+    <a class="qa qa-sheet" href="https://docs.google.com/spreadsheets/d/19xQIsmvBr6IFEvGNL4ByIp1jmFLouon0WfhBqN7qC1E/edit" target="_blank">
+      📋 Planilha Base
+    </a>
+    <a class="qa qa-site" href="https://aflorsa.com.br/" target="_blank">
+      🌐 aflorsa.com.br
+    </a>
+    <button class="qa qa-ref" id="btnR" style="margin-left:auto" onclick="loadData()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      <span class="ts-lbl" id="ts">Atualizar</span>
+    </button>
+  </div>
+
+  <div class="content">
+    <div class="krow">
+      <div class="kcard kg">
+        <div class="k-accent"></div>
+        <div class="k-top"><div class="k-ico">📋</div><span class="k-badge" id="kBadge1">—</span></div>
+        <div class="k-val" id="kT">—</div>
+        <div class="k-lbl">Total de Leads</div>
+      </div>
+      <div class="kcard kr">
+        <div class="k-accent"></div>
+        <div class="k-top"><div class="k-ico">🔥</div><span class="k-badge" id="kBadge2">alta</span></div>
+        <div class="k-val" id="kA">—</div>
+        <div class="k-lbl">Alta Prioridade</div>
+      </div>
+      <div class="kcard ko">
+        <div class="k-accent"></div>
+        <div class="k-top"><div class="k-ico">📞</div><span class="k-badge" id="kBadge3">pendente</span></div>
+        <div class="k-val" id="kF">—</div>
+        <div class="k-lbl">Follow-ups Pendentes</div>
+      </div>
+      <div class="kcard ky">
+        <div class="k-accent"></div>
+        <div class="k-top"><div class="k-ico">⏳</div><span class="k-badge">aguardando</span></div>
+        <div class="k-val" id="kW">—</div>
+        <div class="k-lbl">Aguardando</div>
+      </div>
+      <div class="kcard kb">
+        <div class="k-accent"></div>
+        <div class="k-top"><div class="k-ico">🎯</div><span class="k-badge" id="kBadge">&gt;10%</span></div>
+        <div class="k-val" id="kH">—</div>
+        <div class="k-lbl">Leads Quentes <span id="kBadgeDiag" style="font-size:9px;color:var(--gtext);margin-left:4px;font-weight:600"></span></div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">Funil por Status</div><div class="ph-sub">Distribuição de leads por etapa</div></div></div>
+        <div class="cw"><canvas id="cS"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">Prioridade</div><div class="ph-sub">Alta / Média / Baixa</div></div></div>
+        <div class="cw"><canvas id="cP"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">Top Segmentos</div><div class="ph-sub">por nº de leads</div></div></div>
+        <div class="cw"><canvas id="cG"></canvas></div>
+      </div>
+    </div>
+
+    <div class="fu-row">
+      <div class="fu-ttl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Urgentes
+      </div>
+      <div class="fu-items" id="fuI"></div>
+    </div>
+
+    <div class="fbar">
+      <div class="sbox">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="fQ" placeholder="Buscar empresa ou contato…"/>
+      </div>
+      <select id="fSt"><option value="">Todos os Status</option></select>
+      <select id="fPr"><option value="">Todas Prioridades</option><option>CRÍTICO</option><option>ALTA</option><option>MÉDIA</option><option>BAIXA</option></select>
+      <select id="fAc"><option value="">Todas as Ações</option><option value="FOLLOW">Fazer Follow-up</option><option value="AGUARDAR">Aguardar</option></select>
+      <select id="fSg"><option value="">Todos os Segmentos</option></select>
+      <span class="fcnt" id="cnt">— leads</span>
+    </div>
+
+    <div class="tpanel">
+      <div class="tpanel-hdr">
+        <div class="tpanel-ttl">Leads cadastrados <span id="tblCount">—</span></div>
+        <div class="tpanel-sub">Clique em um lead para ver detalhes e editar</div>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr>
+            <th onclick="srt('empresa')">Empresa ↕</th>
+            <th>Contato</th>
+            <th>Segmento</th>
+            <th onclick="srt('status')">Status ↕</th>
+            <th onclick="srt('prioridade')">Prioridade ↕</th>
+            <th>Ação</th>
+            <th title="Diagnóstico enviado ao lead">Diagnóst.</th>
+            <th onclick="srt('chance')">Chance ↕</th>
+            <th onclick="srt('proxfu')">Próx. Follow-up ↕</th>
+            <th>Interações</th>
+          </tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div style="display:flex;align-items:center;gap:14px">
+    <!-- logo AFLOR -->
+    <span>Av. Antônio Artioli, 570 — Swiss Park Office, Campinas - SP · +55 19 99226 4223</span>
+  </div>
+  <span id="footerTs">—</span>
+</div>
+
+<div class="msk" id="msk" onclick="if(event.target===this)cm()">
+<div class="mbox" id="mbox">
+  <div class="mhdr">
+    <button class="mclose" onclick="cm()">✕</button>
+    <div class="m-emp" id="mEmp">—</div>
+    <div class="m-sub" id="mSub">—</div>
+    <div class="m-chips" id="mChips"></div>
+  </div>
+  <div class="mbody">
+    <div class="msec" style="margin-top:2px">Informações do lead</div>
+    <div class="mgrid" id="mInfo"></div>
+
+    <div class="msec">Atualizar dados <span style="color:var(--gtext);font-size:8px;font-weight:500;text-transform:none;letter-spacing:0">— salva na planilha · campos calculados atualizam automaticamente</span></div>
+    <div class="edit-note">
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Edite os campos abaixo e clique <em>Salvar alterações</em>
+    </div>
+    <div id="_reuniaoNote" style="display:none"></div>
+    <div class="mgrid">
+      <div class="mfield"><label>Última Interação <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(data do contato)</span></label><input class="efield" type="text" id="eUltima" placeholder="ex: 20/03/2026"/></div>
+      <div class="mfield"><label>Follow-ups Realizados</label><input class="efield" type="number" id="eFollowups" min="0"/></div>
+      <div class="mfield"><label>Celular</label><input class="efield" type="tel" id="eCelular" placeholder="Ex: (19) 99999-0000"/></div>
+      <!-- Diagnóstico Enviado + Plataforma -->
+      <div class="mfield"><label>Diagnóstico Enviado <span style="color:var(--gtext);font-weight:500;text-transform:none;letter-spacing:0">(Diagnóstico Enviado)</span></label>
+        <select class="efield esel" id="eDiagnostico">
+          <option value="">— selecione —</option>
+          <option value="Sim">✓ Sim — enviado</option>
+          <option value="Não">✕ Não</option>
+        </select>
+      </div>
+      <div class="mfield"><label>Possui Automação? <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(Plataforma Similar)</span></label><input class="efield" type="text" id="ePlataforma" placeholder="Ex: Totvs, Bling, Nenhuma…"/></div>
+      <div class="mfield"><label>Status</label>
+        <select class="efield esel" id="eStatus">
+          <option value="">Selecione</option>
+          <option value="Novo">Novo</option>
+          <option value="Conectado">Conectado</option>
+          <option value="Qualificado">Qualificado</option>
+          <option value="Proposta">Proposta</option>
+          <option value="Ganho">Ganho</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+      </div>
+    </div>
+    <!-- Campos de texto longos abaixo da grade -->
+    <div class="mfield" style="margin-bottom:10px"><label>🎯 Principal Dor Identificada</label><textarea class="etarea" id="eDor" placeholder="Descreva a dor principal do lead…"></textarea></div>
+    <div class="mfield" style="margin-bottom:16px"><label>📝 Observações Estratégicas</label><textarea class="etarea" id="eObs" placeholder="Observações, contexto, próximos passos…"></textarea></div>
+    <div id="mObsWrap"></div>
+    <div class="mlinks" id="mLinks"></div>
+  </div>
+  <div class="save-bar">
+    <span class="save-status" id="saveStatus"></span>
+    <button class="btn-save" id="btnSave" onclick="saveEdit()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar alterações
+    </button>
+  </div>
+</div>
+</div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbysjwcCifOlYH_gyQsjZsAgLoari6XmhXIrVfPfhruOC8fj9ihughhT-mQyzHB1BKlQ0A/exec';
+let leads=[],sk=null,sa=true,ch={},currentLead=null,_colExists={},_colNames={};
+
+function tick(){
+  const now=new Date();
+  const d=now.toLocaleDateString('pt-BR');
+  const t=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('topTime').textContent=d+' · '+t;
+  document.getElementById('footerTs').textContent='Atualizado em '+d+' às '+t;
+}
+tick();setInterval(tick,60000);
+
+async function loadData(){
+  const btn=document.getElementById('btnR'),ldEl=document.getElementById('ld'),tsEl=document.getElementById('ts');
+  btn.classList.add('spin');
+  tsEl.textContent='Carregando…';
+  document.getElementById('ld-t').textContent='Atualizando dados…';
+  ldEl.classList.remove('gone');
+  try{
+    const r=await fetch(API+'?t='+Date.now());
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(!d.rows||!d.headers)throw new Error('Resposta inválida do servidor');
+    proc(d.rows,d.headers);
+    const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    tsEl.textContent=leads.length+' leads · '+t;
+    setTimeout(()=>ldEl.classList.add('gone'),60);
+  }catch(e){
+    tsEl.textContent='Erro';
+    document.getElementById('ld-t').innerHTML=
+      '<span style="color:#ef4444">Erro: '+e.message+'</span>'+
+      '<br><small style="color:#64748b;margin-top:8px;display:block">Clique para tentar novamente</small>';
+    ldEl.style.cursor='pointer';
+    ldEl.onclick=loadData;
+  }
+  btn.classList.remove('spin');
+}
+
+function saveEdit(){
+  if(!currentLead)return;
+  const btn=document.getElementById('btnSave'),st=document.getElementById('saveStatus');
+
+  if(!currentLead.id || !currentLead.id.trim()){
+    st.className='save-status err';
+    st.textContent='✗ Este lead não possui ID — salvar não é permitido em modo produção';
+    console.error('[AFLOR save] currentLead sem ID:', currentLead);
+    return;
+  }
+
+  btn.disabled=true;st.className='save-status';st.textContent='Salvando…';
+
+  const gv=(id)=>{
+    const el=document.getElementById(id);
+    if(!el||el.disabled||el.value===''||el.value==='N/A') return null;
+    return el.value;
+  };
+
+  const u={};
+  u._id     = currentLead.id;
+  u._action = 'update';
+
+  // ── Payload canônico — chaves literais fixas, norm() no backend converte ──
+  // Data: única que precisa de conversão ISO antes de enviar
+  const uItima = gv('eUltima');
+  if(uItima) u['Ultima Interacao'] = toISODate(uItima);
+
+  // Campos diretos — string (backend trata tipo)
+  u['Followups Realizados']      = document.getElementById('eFollowups').value      || '';
+  u['Diagnostico Enviado']       = document.getElementById('eDiagnostico').value    || '';
+  u['Contato']                   = document.getElementById('eCelular').value         || '';
+  u['Possui Automacao']          = document.getElementById('ePlataforma').value      || '';
+  u['Dor']                       = document.getElementById('eDor').value             || '';
+  u['Observacoes Estrategicas']  = document.getElementById('eObs').value             || '';
+  u['Status']                    = document.getElementById('eStatus').value          || '';
+
+  const params = new URLSearchParams(u);
+
+  function _aplicarLocalmente(){
+    if(u['Ultima Interacao'])              currentLead.ultima      = formatDateBR(u['Ultima Interacao']);
+    if(u['Followups Realizados'])          currentLead.followups   = u['Followups Realizados'];
+    if(u['Diagnostico Enviado'] !== undefined) currentLead.diagnostico = u['Diagnostico Enviado'];
+    if(u['Contato']             !== undefined) currentLead.celular     = u['Contato'];
+    if(u['Possui Automacao']    !== undefined) currentLead.plataforma  = u['Possui Automacao'];
+    if(u['Dor']                 !== undefined) currentLead.dor         = u['Dor'];
+    if(u['Observacoes Estrategicas'] !== undefined) currentLead.obs    = u['Observacoes Estrategicas'];
+    if(u['Status']              !== undefined) currentLead.statusb     = u['Status'];
+    tbl(); kpis();
+  }
+
+  async function _sincronizarAposReload(){
+    const savedId = currentLead ? currentLead.id : null;
+    await loadData();
+    const fresh = savedId ? leads.find(l => l.id && String(l.id) === String(savedId)) : null;
+    if(fresh){ currentLead = fresh; om(fresh); }
+    st.textContent = '✓ Sincronizado com a planilha';
+    setTimeout(() => { st.textContent = ''; }, 2500);
+  }
+
+  fetch(API + '?' + params.toString() + '&t=' + Date.now())
+    .then(r => {
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(resp => {
+      btn.disabled = false;
+      if(resp && resp.status === 'ok'){
+        st.className = 'save-status ok';
+        st.textContent = '✓ Salvo! Atualizando…';
+        _aplicarLocalmente();
+        setTimeout(_sincronizarAposReload, 1500);
+      } else {
+        st.className = 'save-status err';
+        const detail = resp && resp.error ? resp.error : 'resposta inesperada do Apps Script';
+        st.textContent = '✗ ' + detail;
+        console.error('[AFLOR save] Apps Script retornou:', resp);
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      st.className = 'save-status err';
+      st.textContent = '✗ Erro de rede — ' + err.message;
+      console.error('[AFLOR save] fetch error:', err);
+    });
+}
+
+function norm(s){
+  return(s||'').toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove acentos
+    .replace(/[-_?.!,;:()/\\]/g,'')                  // remove pontuação/hífens
+    .replace(/\s+/g,' ').trim();                      // normaliza espaços
+}
+function fc(H,...cc){
+  for(const c of cc){
+    const nc=norm(c);
+    let i=H.findIndex(h=>norm(h)===nc);
+    if(i>=0)return H[i];
+    if(nc.length>=3){
+      i=H.findIndex(h=>{ const nh=norm(h); return nh===nc||nh.startsWith(nc)||nh.includes(nc); });
+      if(i>=0)return H[i];
+    }
+  }
+  return null;
+}
+function pct(c){if(!c)return 0;return parseFloat(c.replace('%+','').replace('%','').replace(',','.'))||0;}
+
+function formatDateBR(d){
+  if(!d)return'';
+  const s=String(d).trim();
+  if(/^\d{2}\/\d{2}\/\d{2}$/.test(s))return s;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+    const[dd,mm,yyyy]=s.split('/');
+    return dd.padStart(2,'0')+'/'+mm.padStart(2,'0')+'/'+yyyy.slice(-2);
+  }
+  const iso=s.split('T')[0];
+  if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+    const[y,m,dia]=iso.split('-');
+    return dia+'/'+m+'/'+y.slice(-2);
+  }
+  return s;
+}
+
+function toISODate(br){
+  if(!br||!br.includes('/'))return br;
+  const[d,m,y]=br.split('/');
+  if(!d||!m||!y)return br;
+  const year=y.length===2?'20'+y:y;
+  return year+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0');
+}
+
+function pd(s){
+  if(!s)return null;
+  if(/^\d{4}-\d{2}-\d{2}/.test(s.trim())){
+    const iso=s.trim().split('T')[0];
+    const[y,m,d]=iso.split('-');
+    return new Date(parseInt(y),parseInt(m)-1,parseInt(d));
+  }
+  const m2=s.replace(/\s/g,'').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,6})/);
+  if(!m2)return null;
+  let y=parseInt(m2[3]);
+  if(y<100)y+=2000;
+  if(y>2100)y=2026;
+  return new Date(y,parseInt(m2[2])-1,parseInt(m2[1]));
+}
+
+function x(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function proc(rows,H){
+  const C={
+    id:         fc(H,'ID','Id','id','Código','Codigo','Num','Número','Numero'),
+    contato:    fc(H,'Nome Contato','Nome do Contato','Responsável','Responsavel','Nome','Representante'),
+    empresa:    fc(H,'Empresa','Nome Empresa','Nome da Empresa','Razão Social','Razao Social'),
+    cargo:      fc(H,'Cargo','Função','Funcao','Título','Titulo'),
+    nivel:      fc(H,'Nível Hierárquico','Nivel Hierarquico','Nível','Nivel','Hierarquia'),
+    celular:    fc(H,'Contato','Celular Corporativo','Celular','Telefone','Fone','WhatsApp','Whatsapp','Tel','Número','Numero'),
+    porte:      fc(H,'Porte','Porte Empresa','Tamanho','Funcionários','Funcionarios','Colaboradores'),
+    plataforma: fc(H,'Possui Automação','Possui Automacao','Já Usa Plataforma Similar','Ja Usa Plataforma Similar','Plataforma Similar','Plataforma','Automação','Automacao','Sistema Atual','Usa Plataforma'),
+    dor:        fc(H,'Principal Dor Identificada','Dor Identificada','Dor Principal','Dor','Problema Principal','Necessidade'),
+    obs:        fc(H,'Observações Estratégicas','Observacoes Estrategicas','Observações','Observacoes','Obs','Notas','Anotações','Anotacoes'),
+    ultima:     fc(H,'Última Interação','Ultima Interacao','Ultima Interação','Último Contato','Ultimo Contato','Data Contato','Data Ultima Interacao'),
+    followups:  fc(H,'Follow-ups Realizados','Followups Realizados','Follow ups Realizados','Nº Follow-ups','Numero Followups','Qtd Followups','Follow-up','Followup'),
+    interacoes: fc(H,'Interações Totais','Interacoes Totais','Total Interações','Total Interacoes','Interações','Interacoes','Nº Interações'),
+    status:     fc(H,'Status Lead','Status do Lead','Etapa','Fase'),
+    statusb:    fc(H,'Status'),                                          // col B — Status comercial (editável)
+    proxfu:     fc(H,'Próximo Follow-up','Proximo Follow-up','Proximo Followup','Próximo Followup','Data Follow-up','Data Followup','Próximo Contato','Proximo Contato'),
+    prioridade: fc(H,'Prioridade','Prioridade Lead','Urgência','Urgencia'),
+    acao:       fc(H,'Ação','Acao','Próxima Ação','Proxima Acao','Ação Necessária','Acao Necessaria'),
+    chance:     fc(H,'Chance Fechamento','Chance de Fechamento','Probabilidade','Probabilidade Fechamento','% Fechamento'),
+    segmento:   fc(H,'Segmento','Segmento Principal','Setor','Ramo','Ramo de Atividade','Área','Area','Setor de Atuação','Setor de Atuacao'),
+    email:      fc(H,'E-mail Direto','E-mail','Email','E-Mail','Correio'),
+    linkedin:   fc(H,'LinkedIn Pessoal','Linkedin Pessoal','LinkedIn','Linkedin','Perfil LinkedIn','Perfil Linkedin','URL LinkedIn','Link LinkedIn','LinkedIn do Responsável','Rede Social','Perfil','LinkedIn Contato'),
+    linkedinco: fc(H,'LinkedIn Empresa','Linkedin Empresa','linkedin empresa','LinkedIn da Empresa','Empresa LinkedIn'),
+    site:       fc(H,'Site','Website','URL','Homepage','site'),
+    cidade:     fc(H,'Cidade','Localização','Localizacao','Município','Municipio','Piracicaba','piracicaba','cidade','Local'),
+    diagnostico:fc(H,'Diagnóstico Enviado','Diagnostico Enviado','Diagnóstico','Diagnostico','ROI Enviado','Relatorio Enviado','Relatório Enviado'),
+    atraso:     fc(H,'Atraso Real','Atraso','Delay','Dias de Atraso','Dias Atraso'),
+  };
+  _colExists = Object.fromEntries(Object.entries(C).map(([k,v])=>[k, v !== null]));
+  _colNames  = Object.fromEntries(Object.entries(C).filter(([,v])=>v!==null));
+  leads=rows.map(r=>Object.fromEntries(Object.entries(C).map(([k,col])=>{
+    if(!col) return [k,''];
+    let v=(r[col]||'').toString().trim();
+    if(v && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/.test(v)){
+      try{ const d=new Date(v); if(!isNaN(d)) v=formatDateBR(d.toISOString()); }catch(e){}
+    }
+    if((k==='ultima'||k==='proxfu') && v){
+      v=formatDateBR(v);
+    }
+    v=v.replace(/(\d{1,2}\/\d{1,2}\/)2(\d{4})/g,'$1$2');
+    v=v.replace(/(\d{1,2}\/\d{1,2}\/\d{4})\d+/g,'$1');
+    if((k==='ultima'||k==='proxfu') && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v)){
+      v=formatDateBR(v);
+    }
+    return [k,v];
+  }))).filter(l=>l.empresa&&l.empresa.toLowerCase()!=='empresa'&&l.empresa.trim()!=='')
+  .map(l=>{
+    if(l.porte && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(l.porte) && !/^\d+-\d+/.test(l.porte)){
+      l.porte = '';
+    }
+    if(l.chance){
+      const n=parseFloat(l.chance);
+      if(!isNaN(n) && n>0 && n<1){
+        l.chance=Math.round(n*100)+'%';
+      } else if(!isNaN(n) && n>=1 && !l.chance.includes('%')){
+        l.chance=Math.round(n)+'%';
+      }
+    }
+    return l;
+  });
+  kpis();charts();strip();filters();tbl();
+}
+
+function kpis(){
+  const n=leads.length;
+  document.getElementById('kT').textContent=n;
+  document.getElementById('kBadge1').textContent=leads.filter(l=>l.status).length+' com status';
+  document.getElementById('kA').textContent=leads.filter(l=>l.prioridade==='ALTA'||l.prioridade==='CRÍTICO').length;
+  document.getElementById('kF').textContent=leads.filter(l=>l.acao&&l.acao.includes('FOLLOW')).length;
+  document.getElementById('kW').textContent=leads.filter(l=>l.acao&&l.acao.includes('AGUARDAR')).length;
+  document.getElementById('kH').textContent=leads.filter(l=>pct(l.chance)>10).length;
+  const diagCount=leads.filter(l=>l.diagnostico&&l.diagnostico.toLowerCase().startsWith('s')).length;
+  const badgeEl=document.getElementById('kBadgeDiag');
+  if(badgeEl) badgeEl.textContent=diagCount+' diagnóst.';
+}
+
+function charts(){
+  Object.values(ch).forEach(c=>c.destroy());ch={};
+  Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#e2e8f0';
+  Chart.defaults.font.family="'Inter',sans-serif";
+
+  const sc={};
+  leads.forEach(l=>{if(l.status)sc[l.status]=(sc[l.status]||0)+1;});
+  delete sc['Novo'];
+  function _sOrd(s){if(s==='Primeiro contato')return 0;const m=s.match(/^Follow-up\s+(\d+)/i);return m?parseInt(m[1]):999;}
+  const ss=Object.entries(sc).sort((a,b)=>_sOrd(a[0])-_sOrd(b[0]));
+  ch.s=new Chart(document.getElementById('cS'),{type:'bar',
+    data:{labels:ss.map(s=>s[0]),datasets:[{data:ss.map(s=>s[1]),backgroundColor:['#bbf7d0','#86efac','#4ade80','#22c55e','#16a34a','#15803d'],borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#94a3b8'}},y:{grid:{color:'#f1f5f9'},ticks:{stepSize:1,color:'#94a3b8'}}}}
+  });
+
+  const pc={};leads.forEach(l=>{if(l.prioridade)pc[l.prioridade]=(pc[l.prioridade]||0)+1;});
+  delete pc['-'];delete pc[''];delete pc['—'];
+  ch.p=new Chart(document.getElementById('cP'),{type:'doughnut',
+    data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:Object.keys(pc).map(k=>({ALTA:'#ef4444',MÉDIA:'#f97316',BAIXA:'#22c55e'}[k]||'#3b82f6')),borderColor:'#ffffff',borderWidth:3,hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:11},color:'#475569'}}}}
+  });
+
+  const gc={};leads.forEach(l=>l.segmento.split(',').forEach(s=>{const k=s.trim();if(k)gc[k]=(gc[k]||0)+1;}));
+  const top=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  ch.g=new Chart(document.getElementById('cG'),{type:'bar',
+    data:{labels:top.map(s=>s[0]),datasets:[{data:top.map(s=>s[1]),backgroundColor:'#fff7ed',borderColor:'#f97316',borderWidth:2,borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{stepSize:1,color:'#94a3b8'}},y:{grid:{display:false},ticks:{font:{size:10},color:'#475569'}}}}
+  });
+}
+
+function strip(){
+  const td=new Date();td.setHours(0,0,0,0);
+  const sn=new Date(td);sn.setDate(sn.getDate()+5);
+  const el=document.getElementById('fuI');el.innerHTML='';
+  const u=leads.filter(l=>l.proxfu&&l.acao&&l.acao.includes('FOLLOW')).map(l=>({...l,_d:pd(l.proxfu)})).filter(l=>l._d&&l._d<=sn).sort((a,b)=>a._d-b._d).slice(0,16);
+  if(!u.length){el.innerHTML='<span style="color:#94a3b8;font-size:11px">Nenhum follow-up urgente nos próximos 5 dias</span>';return;}
+  u.forEach(l=>{const d=document.createElement('div');d.className='fuchip'+(l._d<td?' ov':'');d.innerHTML=`<span class="co">${x(l.empresa)}</span><span class="dt">${x(l.proxfu)}</span>`;d.onclick=()=>om(l);el.appendChild(d);});
+}
+
+function filters(){
+  const ss=[...new Set(leads.map(l=>l.status).filter(Boolean))];
+  const s1=document.getElementById('fSt');s1.innerHTML='<option value="">Todos os Status</option>';
+  ss.forEach(s=>s1.insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+  const sg=[...new Set(leads.flatMap(l=>l.segmento.split(',').map(s=>s.trim())).filter(Boolean))].sort();
+  const s2=document.getElementById('fSg');s2.innerHTML='<option value="">Todos os Segmentos</option>';
+  sg.forEach(s=>s2.insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+  ['fQ','fSt','fPr','fAc','fSg'].forEach(id=>document.getElementById(id).addEventListener('input',tbl));
+}
+
+function srt(k){sa=sk===k?!sa:true;sk=k;tbl();}
+function tbl(){
+  const q=document.getElementById('fQ').value.toLowerCase();
+  const fS=document.getElementById('fSt').value,fP=document.getElementById('fPr').value;
+  const fA=document.getElementById('fAc').value,fG=document.getElementById('fSg').value;
+  let list=leads.filter(l=>{
+    if(q&&!l.empresa.toLowerCase().includes(q)&&!l.contato.toLowerCase().includes(q))return false;
+    if(fS&&l.status!==fS)return false;if(fP&&l.prioridade!==fP)return false;
+    if(fA&&!l.acao.toUpperCase().includes(fA))return false;if(fG&&!l.segmento.includes(fG))return false;
+    return true;
+  });
+  if(sk){list=[...list].sort((a,b)=>{let va=a[sk]||'',vb=b[sk]||'';if(sk==='chance'){va=pct(va);vb=pct(vb);return sa?va-vb:vb-va;}return sa?va.localeCompare(vb,'pt'):vb.localeCompare(va,'pt');});}
+  document.getElementById('cnt').textContent=list.length+' lead'+(list.length!==1?'s':'');
+  document.getElementById('tblCount').textContent=list.length+' registros';
+  const td=new Date();td.setHours(0,0,0,0);const sn=new Date(td);sn.setDate(sn.getDate()+5);
+  const tb=document.getElementById('tb');
+  if(!list.length){tb.innerHTML='<tr><td colspan="10"><div class="empt"><span>🔍</span>Nenhum resultado com os filtros aplicados.</div></td></tr>';return;}
+  tb.innerHTML=list.map(l=>{
+    const cv=pct(l.chance),cc=cv>20?'pH':cv>10?'pM':'pL';
+    const pc2={CRÍTICO:'cA',ALTA:'cA',MÉDIA:'cM',BAIXA:'cB'}[l.prioridade]||'cS';
+    const isLost=l.status==='Encerrado';
+    const isFechado=l.status==='Convertido';
+    const isReuniao=l.status==='Reunião agendada';
+    const ac=isFechado?'cFechado':isReuniao?'cReuniao':isLost?'cLost':l.acao&&l.acao.includes('FOLLOW')?'cF':'cW';
+    const dt=pd(l.proxfu),fc2='';
+    const trClass=isFechado?'is-fechado':isReuniao?'is-reuniao':isLost?'is-closed':'';
+    const isDiag = l.diagnostico && l.diagnostico.toLowerCase().startsWith('s');
+    return`<tr class="${trClass}" onclick="om(leads[${leads.indexOf(l)}])">
+      <td class="te">${x(l.empresa)}</td>
+      <td class="tcn">${x(l.contato)||'—'}</td>
+      <td class="tsg">${x(l.segmento)||'—'}</td>
+      <td>${l.status?`<span class="chip cS">${x(l.status)}</span>`:'—'}</td>
+      <td>${(isLost||isFechado)?`<span style="color:var(--t3);font-size:10px">N/A</span>`:(l.prioridade?`<span class="chip ${pc2}">${l.prioridade}</span>`:'—')}</td>
+      <td>${isFechado?`<span class="chip cFechado">Convertido ✓</span>`:isLost?`<span class="chip cLost">Encerrado</span>`:(l.acao?`<span class="chip ${ac}">${l.acao.length>14?l.acao.slice(0,14)+'…':x(l.acao)}</span>`:'—')}</td>
+      <td>${isDiag?`<span class="chip cDiag" title="Diagnóstico enviado">✓ Diag.</span>`:l.diagnostico?`<span class="chip cDiagNo" title="${x(l.diagnostico)}">✕</span>`:'<span style="color:var(--t4);font-size:10px">—</span>'}</td>
+      <td>${(isLost||isFechado)?`<span style="color:var(--t3);font-size:10px">N/A</span>`:`<span class="pct ${cc}">${x(l.chance)||'—'}</span>`}</td>
+      <td>${(isLost||isFechado)?`<span style="color:var(--t3);font-size:10px">N/A</span>`:`<span class="fudt ${fc2}">${x(l.proxfu)||'—'}</span>`}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8">${l.interacoes||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function om(l){
+  currentLead=l;
+  document.getElementById('mEmp').textContent=l.empresa||'—';
+  document.getElementById('mSub').textContent=(l.contato||'—')+(l.cargo?' · '+l.cargo:'')+(l.nivel?' · '+l.nivel:'');
+  const pc2={CRÍTICO:'cA',ALTA:'cA',MÉDIA:'cM',BAIXA:'cB'}[l.prioridade]||'';
+  const isLost=l.status==='Encerrado';
+    const isFechado=l.status==='Convertido';
+    const isReuniao=l.status==='Reunião agendada';
+    const ac=isFechado?'cFechado':isReuniao?'cReuniao':isLost?'cLost':l.acao&&l.acao.includes('FOLLOW')?'cF':'cW';
+  const cv=pct(l.chance),cc=cv>20?'pH':cv>10?'pM':'pL';
+  document.getElementById('mChips').innerHTML=`
+    ${l.prioridade?`<span class="chip ${pc2}">${l.prioridade}</span>`:''}
+    ${l.status?`<span class="chip cS">${x(l.status)}</span>`:''}
+    ${l.acao?`<span class="chip ${ac}">${x(l.acao)}</span>`:''}
+    ${l.chance?`<span class="chip cS"><span class="pct ${cc}">${x(l.chance)}</span> fechamento</span>`:''}`;
+  document.getElementById('mInfo').innerHTML=`
+    <div class="mfield"><label>Segmento</label><p>${x(l.segmento)||'—'}</p></div>
+    <div class="mfield"><label>Porte</label><p>${x(l.porte)||'—'}</p></div>
+    <div class="mfield"><label>Celular</label><p>${x(l.celular)||'—'}</p></div>
+    <div class="mfield"><label>Interações Totais</label><p style="font-family:'JetBrains Mono',monospace">${l.interacoes||'—'}</p></div>
+    <div class="mfield"><label>Follow-ups Realizados</label><p style="font-family:'JetBrains Mono',monospace">${l.followups||'—'}</p></div>
+    ${l.cidade?`<div class="mfield"><label>Cidade</label><p>${x(l.cidade)}</p></div>`:''}
+    ${l.diagnostico?`<div class="mfield"><label>Diagnóstico Enviado</label><p>${l.diagnostico.toLowerCase().startsWith('s')?`<span class="chip cDiag">✓ Enviado</span>`:`<span class="chip cDiagNo">✕ Não enviado</span>`}</p></div>`:''}
+    `;
+  document.getElementById('eUltima').value = formatDateBR(l.ultima||'');
+  document.getElementById('eFollowups').value=l.followups ||'';
+  document.getElementById('eDiagnostico').value = l.diagnostico||'';
+  document.getElementById('ePlataforma').value   = l.plataforma ||'';
+  document.getElementById('eCelular').value      = l.celular    ||'';
+  document.getElementById('eDor').value          = l.dor        ||'';
+  document.getElementById('eObs').value          = l.obs        ||'';
+  document.getElementById('eStatus').value = l.statusb || '';
+
+  const lk=[l.site?`<a class="mlink" href="${l.site}" target="_blank">🌐 Site</a>`:'',l.linkedin?`<a class="mlink" href="${l.linkedin}" target="_blank">🔗 LinkedIn</a>`:'',l.linkedinco?`<a class="mlink" href="${l.linkedinco}" target="_blank">🏢 Empresa</a>`:'',l.email?`<a class="mlink" href="mailto:${l.email}">✉️ ${x(l.email)}</a>`:''].filter(Boolean).join('');
+  document.getElementById('mObsWrap').innerHTML=''; // dor e obs agora são editáveis acima
+  document.getElementById('mLinks').innerHTML=lk;
+  document.getElementById('saveStatus').textContent='';
+  document.getElementById('saveStatus').className='save-status';
+  document.getElementById('msk').classList.add('open');
+  document.getElementById('mbox').scrollTop=0;
+}
+function onStatusChange(status){
+  // função mantida por compatibilidade
+}
+
+function cm(){document.getElementById('msk').classList.remove('open');currentLead=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cm();});
+
+loadData();
+</script>
+</body>
+</html>
